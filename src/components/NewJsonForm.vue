@@ -14,9 +14,18 @@
       :items="typesValue"
       :rules="generalRule"
     />
+    <v-select
+      required
+      label="Value"
+      v-model="newValue"
+      v-if="typeValue === 'boolean'"
+      :items="['true', 'false']"
+      :rules="generalRule"
+    />
     <v-text-field
       label="Value"
       v-model="newValue"
+      v-else
       :rules="typeRule"
     />
     <v-btn
@@ -60,11 +69,13 @@ export default {
       this.$emit('changeToggle')
     },
     findNode (tree, newValue) {
+      if (this.fieldKey === 'New key') {
+        tree[this.newKey] = newValue
+        return
+      }
+
       for (const [key, value] of Object.entries(tree)) {
         switch (this.fieldKey) {
-          case 'New key':
-            tree[this.newKey] = newValue
-            return
           case key:
             if (this.mode === 'add') {
               tree[key][this.newKey] = newValue
@@ -73,7 +84,9 @@ export default {
             }
             return
           default:
-            this.findNode(value, newValue)
+            if (typeof value === 'object') {
+              this.findNode(value, newValue)
+            }
         }
       }
     }
