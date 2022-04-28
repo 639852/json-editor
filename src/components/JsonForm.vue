@@ -65,7 +65,6 @@ export default {
       else tree = { [this.newKey]: value }
 
       localStorage.setItem('JSON', JSON.stringify(tree))
-      this.$refs.form.reset()
       this.$emit('changeToggle')
     },
     findNode (tree, newValue) {
@@ -107,6 +106,13 @@ export default {
           return e.message
         }
       }]
+    }
+  },
+  watch: {
+    toggleNewFields () {
+      if (this.$refs.form) {
+        this.$refs.form.reset()
+      }
     }
   }
 }

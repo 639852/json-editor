@@ -21,7 +21,7 @@
 <script>
 export default {
   props: {
-    toggleNewFields: { type: Boolean, required: true }
+    toggleNewFields: { type: Boolean }
   },
   data: () => ({
     tree: '',
@@ -81,7 +81,3 @@ export default {
   }
 }
 </script>
-
-<style>
-
-</style>
