@@ -1,71 +1,105 @@
 <template>
-  <v-col>
-    <v-form v-model="isValid">
-      <v-textarea
-        v-model="tree"
-        :disabled="toggleNewFields"
-        :rules="typeRule"
-      ></v-textarea>
-      <v-btn
-        dark
-        color="success"
-        :disabled="!isValid || toggleNewFields"
-        @click="changeField"
-      >
-        Save
-      </v-btn>
-    </v-form>
-  </v-col>
+  <v-textarea
+    v-model="tree"
+    :disabled="disabled"
+    :rules="typeRule"
+    @keyup="formatting"
+    @change="() => $emit('getTree', tree)"
+  />
 </template>
 
 <script>
 export default {
   props: {
-    toggleNewFields: { type: Boolean }
+    disabled: { type: Boolean }
   },
   data: () => ({
-    tree: '',
-    isValid: true
+    tree: ''
   }),
   methods: {
     changeTree () {
-      if (!localStorage.getItem('JSON')) return
+      if (!localStorage.getItem('JSON')) {
+        localStorage.setItem('JSON', '{}')
+      }
 
-      const brackets = []
+      let count = 0
 
       this.tree = localStorage.getItem('JSON')
         .split('')
-        .map((letter) => {
-          switch (letter) {
+        .map((simbol) => {
+          switch (simbol) {
             case '{':
-              brackets.push('{')
-              return `{\n${'\t'.repeat(brackets.length)}`
+              count++
+              return `{\n${'\t'.repeat(count)}`
             case '}':
-              brackets.pop()
-              return `\n${'\t'.repeat(brackets.length)}}`
+              count--
+              return `\n${'\t'.repeat(count)}}`
             case ':':
               return ': '
             case ',':
-              return `,\n${'\t'.repeat(brackets.length)}`
+              return `,\n${'\t'.repeat(count)}`
             default:
-              return letter
+              return simbol
           }
         })
         .join('')
     },
-    changeField () {
-      const tree = JSON.parse(this.tree)
+    formatting ({ target, key }) {
+      const start = target.selectionStart
+      const endString = target.value
+        .slice(start)
+      const count = () => endString
+        .split('')
+        .filter((simbol) => simbol === '}')
+        .length
+      let string = ''
 
-      localStorage.setItem('JSON', JSON.stringify(tree))
-      this.isValid = false
+      switch (key) {
+        case '{':
+          string = '}'
+          break
+        case '"':
+          string = '"'
+          break
+        case ':':
+          string = ' '
+          break
+        case 'Enter':
+          if (endString[0] === '}') {
+            string = `${'\t'.repeat(count())}\n` +
+              '\t'.repeat(count() - 1)
+          } else {
+            string = '\t'.repeat(count())
+          }
+          break
+      }
+
+      this.tree = target.value
+        .slice(0, start)
+        .concat(string, endString)
+
+      setTimeout(() => {
+        const num = start + count()
+
+        switch (key) {
+          case ':':
+            target.setSelectionRange(start + 1, start + 1)
+            break
+          case 'Enter':
+            target.setSelectionRange(num, num)
+            break
+          default:
+            target.setSelectionRange(start, start)
+        }
+      })
     }
   },
-  mounted () {
+  beforeMount () {
     this.changeTree()
   },
   watch: {
-    toggleNewFields () {
-      this.changeTree()
+    disabled () {
+      setTimeout(this.changeTree)
     }
   },
   computed: {
