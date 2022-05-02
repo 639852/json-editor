@@ -26,7 +26,9 @@
             :newKey="newKey"
             :newValue="newValue"
             :typeValue="typeValue"
+            :add="add"
             @changeValue="changeValue"
+            @changeAdd="(value) => add = value"
           />
         </v-container>
       </v-form>
@@ -50,7 +52,8 @@ export default {
     newValue: '',
     typeValue: '',
     disabled: false,
-    disabledDelete: true
+    disabledDelete: true,
+    add: false
   }),
   methods: {
     changeValue ({ key, value }) {
@@ -67,14 +70,25 @@ export default {
       }
     },
     deleteField () {
-      const tree = JSON.parse(localStorage.getItem('JSON'))
-
       if (this.fieldKey !== '/') {
-        delete tree[this.fieldKey]
+        const tree = JSON.parse(localStorage.getItem('JSON'))
+
+        this.deleteNode(tree)
+
         localStorage.setItem('JSON', JSON.stringify(tree))
       }
 
       this.cancel()
+    },
+    deleteNode (tree) {
+      for (const [key, value] of Object.entries(tree)) {
+        if (key === this.fieldKey) {
+          delete tree[this.fieldKey]
+          return
+        } else if (typeof value === 'object') {
+          this.deleteNode(value)
+        }
+      }
     },
     changeField () {
       if (this.tree !== '') {
@@ -83,8 +97,13 @@ export default {
         localStorage.setItem('JSON', JSON.stringify(tree))
         this.isValid = false
         this.tree = ''
+        this.cancel()
 
         return
+      }
+
+      if (this.typeValue === 'object' && this.add) {
+        this.newValue = '{}'
       }
 
       const value = (this.typeValue === 'string')
@@ -110,7 +129,7 @@ export default {
 
         switch (this.fieldKey) {
           case key:
-            if (isObject && !isUndefined) {
+            if (isObject && !isUndefined && this.add) {
               tree[key][this.newKey] = newValue
             } else if (!isUndefined) {
               delete tree[this.fieldKey]
@@ -121,7 +140,7 @@ export default {
             }
             return
           default:
-            if (typeof value === 'object') {
+            if (isObject) {
               return this.findNode(value, newValue)
             }
         }
@@ -139,8 +158,13 @@ export default {
 
         this.newKey = key
         this.typeValue = type
-        this.newValue = `${value}`
         this.disabledDelete = false
+
+        if (type === 'string') {
+          this.newValue = value
+        } else {
+          this.newValue = JSON.stringify(value)
+        }
       }
 
       this.disabled = true

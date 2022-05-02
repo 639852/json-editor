@@ -4,7 +4,7 @@
       <v-text-field
         required
         label="New key"
-        v-if="toggleKeys"
+        v-if="add"
         :value="newKey"
         :rules="generalRule"
         @change="(value) => changeValue('newKey', value)"
@@ -21,8 +21,8 @@
         dark
         dense
         color="yellow"
-        v-if="toggleKeys"
-        @click="() => toggleKeys = false"
+        v-if="add"
+        @click="() => $emit('changeAdd', false)"
       >
         mdi-minus
       </v-icon>
@@ -31,7 +31,7 @@
         dense
         color="green"
         v-else-if="typeValue === 'object'"
-        @click="() => toggleKeys = true"
+        @click="() => $emit('changeAdd', true)"
       >
         mdi-plus
       </v-icon>
@@ -79,26 +79,22 @@ export default {
     fieldKey: { type: String, required: true },
     newKey: { type: String, required: true },
     newValue: { type: String, required: true },
-    typeValue: { type: String, required: true }
+    typeValue: { type: String, required: true },
+    add: { type: Boolean, required: true }
   },
   data: () => ({
-    toggleKeys: false,
     typesValue: ['string', 'number', 'boolean', 'object'],
     generalRule: [v => !!v || 'This field is required!']
   }),
   methods: {
     changeValue (key, value) {
       this.$emit('changeValue', { key, value })
-
-      if (value === 'object') {
-        this.$emit('changeValue', { key: 'newValue', value: '{}' })
-      }
     }
   },
   watch: {
     typeValue () {
       if (this.typeValue === '') {
-        this.toggleKeys = false
+        this.$emit('changeAdd', false)
       }
     }
   },
